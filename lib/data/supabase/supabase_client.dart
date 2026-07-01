@@ -12,7 +12,7 @@ class SupabaseClientConfig {
       );
     }
 
-    await Supabase.initialize(url: url, anonKey: anonKey);
+    await Supabase.initialize(url: url, publishableKey: anonKey);
   }
 
   static SupabaseClient get client => Supabase.instance.client;
