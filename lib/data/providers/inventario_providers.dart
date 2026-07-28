@@ -17,3 +17,9 @@ final inventarioListProvider = FutureProvider<List<Inventario>>((ref) async {
   final estado = ref.watch(estadoFiltroProvider);
   return repository.getAll(estado: estado, busqueda: busqueda);
 });
+
+// Solo equipos disponibles — para los selectores de proforma y boleta
+final inventarioDisponibleProvider = FutureProvider<List<Inventario>>((ref) {
+  return ref.watch(inventarioRepositoryProvider)
+      .getAll(estado: EstadoInventario.disponible);
+});

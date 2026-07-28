@@ -16,12 +16,14 @@ class Inventario {
   final String nombreEquipo;
   final String descripcion;
   final EstadoInventario estado;
+  final String? fotoPortada;
 
   const Inventario({
     this.numeroActivo,
     required this.nombreEquipo,
     required this.descripcion,
     required this.estado,
+    this.fotoPortada,
   });
 
   factory Inventario.fromMap(Map<String, dynamic> map) {
@@ -30,6 +32,7 @@ class Inventario {
       nombreEquipo: map['nombre_equipo'] as String,
       descripcion: map['descripcion'] as String,
       estado: EstadoInventario.fromString(map['estado'] as String),
+      fotoPortada: map['foto_portada'] as String?,
     );
   }
 
@@ -38,6 +41,7 @@ class Inventario {
       'nombre_equipo': nombreEquipo,
       'descripcion': descripcion,
       'estado': estado.name,
+      // foto_portada se actualiza aparte con setFotoPortada()
     };
   }
 
@@ -46,12 +50,14 @@ class Inventario {
     String? nombreEquipo,
     String? descripcion,
     EstadoInventario? estado,
+    String? fotoPortada,
   }) {
     return Inventario(
       numeroActivo: numeroActivo ?? this.numeroActivo,
       nombreEquipo: nombreEquipo ?? this.nombreEquipo,
       descripcion: descripcion ?? this.descripcion,
       estado: estado ?? this.estado,
+      fotoPortada: fotoPortada ?? this.fotoPortada,
     );
   }
 }

@@ -5,16 +5,14 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import '../../domain/models/proforma.dart';
-import '../../domain/models/proforma_equipo.dart';
+import '../../domain/models/boleta.dart';
+import '../../domain/models/boleta_equipo.dart';
 
-// Colores de marca
 const _verde = PdfColor.fromInt(0xFF4CAF50);
 const _grisOscuro = PdfColor.fromInt(0xFF2D2D2D);
 const _grisClaro = PdfColor.fromInt(0xFFF5F5F5);
 const _grisBorde = PdfColor.fromInt(0xFFCCCCCC);
 
-// Clausulas fijas que aparecen en todas las proformas
 const _clausulas = [
   'Los contratos iniciales no tienen nota de credito.',
   'La forma de pago es via transferencia o deposito.',
@@ -23,29 +21,29 @@ const _clausulas = [
   'Previa revision al devolver el bien, todo dano provocado al bien sera cubierto por el cliente en su totalidad.',
 ];
 
-class ProformaPdf {
+class BoletaPdf {
   static Future<void> mostrar({
-    required Proforma proforma,
-    required List<ProformaEquipo> equipos,
+    required Boleta boleta,
+    required List<BoletaEquipo> equipos,
   }) async {
-    final doc = await _generar(proforma, equipos);
+    final doc = await _generar(boleta, equipos);
     await Printing.layoutPdf(
       onLayout: (_) => doc.save(),
-      name: 'Proforma-${proforma.proformaId}-${proforma.nombreCliente}',
+      name: 'Boleta-${boleta.boletaId}-${boleta.nombreEmpresaCliente}',
     );
   }
 
   static Future<List<int>> generarBytes({
-    required Proforma proforma,
-    required List<ProformaEquipo> equipos,
+    required Boleta boleta,
+    required List<BoletaEquipo> equipos,
   }) async {
-    final doc = await _generar(proforma, equipos);
+    final doc = await _generar(boleta, equipos);
     return doc.save();
   }
 
   static Future<pw.Document> _generar(
-    Proforma proforma,
-    List<ProformaEquipo> equipos,
+    Boleta boleta,
+    List<BoletaEquipo> equipos,
   ) async {
     final logoData = await rootBundle.load('docs/logo llano verde.jpeg');
     final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
@@ -65,15 +63,11 @@ class ProformaPdf {
 
     final fmt = NumberFormat('#,##0.00');
     final dateFmt = DateFormat('d/M/yyyy');
-    final s = proforma.moneda.simboloPdf;
-    final fecha = proforma.fechaCreacion != null
-        ? dateFmt.format(proforma.fechaCreacion!)
-        : dateFmt.format(DateTime.now());
 
     final subtotal = equipos.fold(0.0, (sum, e) => sum + e.total);
-    final base = subtotal + proforma.transporte;
+    final base = subtotal + boleta.transporte;
     final iva = base * 0.13;
-    final total = base + iva - proforma.descuento;
+    final total = base + iva - boleta.descuento;
 
     final doc = pw.Document();
 
@@ -84,16 +78,15 @@ class ProformaPdf {
         build: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            _encabezado(logoImage, proforma, fecha),
+            _encabezado(logoImage, boleta, dateFmt),
             pw.SizedBox(height: 14),
-            _seccionCliente(proforma),
+            _seccionCliente(boleta, dateFmt),
             pw.SizedBox(height: 14),
-            _tablaEquipos(equipos, fotos, fmt, dateFmt, s),
+            _tablaEquipos(equipos, fotos, fmt),
             pw.SizedBox(height: 16),
             _seccionInferior(
-              proforma: proforma,
+              boleta: boleta,
               fmt: fmt,
-              s: s,
               subtotal: subtotal,
               iva: iva,
               total: total,
@@ -106,20 +99,22 @@ class ProformaPdf {
     return doc;
   }
 
-  // ── Encabezado ─────────────────────────────────────────────────────────────
+  // ── Encabezado ──────────────────────────────────────────────────────────────
 
   static pw.Widget _encabezado(
     pw.MemoryImage logo,
-    Proforma proforma,
-    String fecha,
+    Boleta boleta,
+    DateFormat dateFmt,
   ) {
+    final fechaCreacion = boleta.fechaCreacion != null
+        ? dateFmt.format(boleta.fechaCreacion!)
+        : dateFmt.format(DateTime.now());
+
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Logo
         pw.Image(logo, width: 90, height: 90),
         pw.SizedBox(width: 16),
-        // Datos de la empresa
         pw.Expanded(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -138,18 +133,17 @@ class ProformaPdf {
           ),
         ),
         pw.SizedBox(width: 16),
-        // N° y fecha
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             pw.Container(
-              padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
               decoration: pw.BoxDecoration(
                 color: _verde,
                 borderRadius: pw.BorderRadius.circular(4),
               ),
-              child: pw.Text('PROFORMA',
+              child: pw.Text('BOLETA',
                   style: pw.TextStyle(
                       color: PdfColors.white,
                       fontWeight: pw.FontWeight.bold,
@@ -159,11 +153,11 @@ class ProformaPdf {
             pw.RichText(
               text: pw.TextSpan(children: [
                 pw.TextSpan(
-                    text: 'N°  ',
+                    text: 'N  ',
                     style: pw.TextStyle(
                         fontSize: 10, fontWeight: pw.FontWeight.bold)),
                 pw.TextSpan(
-                    text: '${proforma.proformaId}',
+                    text: '${boleta.boletaId}',
                     style: const pw.TextStyle(fontSize: 10)),
               ]),
             ),
@@ -175,9 +169,21 @@ class ProformaPdf {
                     style: pw.TextStyle(
                         fontSize: 10, fontWeight: pw.FontWeight.bold)),
                 pw.TextSpan(
-                    text: fecha,
+                    text: fechaCreacion,
                     style: const pw.TextStyle(fontSize: 10)),
               ]),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 6, vertical: 2),
+              decoration: pw.BoxDecoration(
+                color: _grisClaro,
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Text(boleta.estado.name.toUpperCase(),
+                  style: pw.TextStyle(
+                      fontSize: 9, fontWeight: pw.FontWeight.bold)),
             ),
           ],
         ),
@@ -187,7 +193,7 @@ class ProformaPdf {
 
   // ── Sección cliente ─────────────────────────────────────────────────────────
 
-  static pw.Widget _seccionCliente(Proforma proforma) {
+  static pw.Widget _seccionCliente(Boleta boleta, DateFormat dateFmt) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
@@ -197,14 +203,18 @@ class ProformaPdf {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _filaCliente('CLIENTE', proforma.nombreCliente, negrita: true),
-          if (proforma.contacto != null && proforma.contacto!.isNotEmpty)
-            _filaCliente('CONTACTO', proforma.contacto!),
-          _filaCliente('Telefono', proforma.telefonoCliente),
-          _filaCliente('Correo', proforma.correoCliente),
-          if (proforma.informacionDetalle != null &&
-              proforma.informacionDetalle!.isNotEmpty)
-            _filaCliente('Info / detalle', proforma.informacionDetalle!),
+          _filaCliente('CLIENTE', boleta.nombreEmpresaCliente,
+              negrita: true),
+          if (boleta.contacto != null && boleta.contacto!.isNotEmpty)
+            _filaCliente('CONTACTO', boleta.contacto!),
+          _filaCliente('Telefono', boleta.telefono),
+          _filaCliente('Correo', boleta.correo),
+          _filaCliente('Periodo',
+              '${dateFmt.format(boleta.fechaInicio)} - ${dateFmt.format(boleta.fechaRetiro)}'),
+          if (boleta.ordenCompra != null && boleta.ordenCompra!.isNotEmpty)
+            _filaCliente('Orden de compra', boleta.ordenCompra!),
+          if (boleta.facturaUrl != null && boleta.facturaUrl!.isNotEmpty)
+            _filaCliente('Factura', boleta.facturaUrl!),
         ],
       ),
     );
@@ -225,8 +235,9 @@ class ProformaPdf {
           child: pw.Text(valor,
               style: pw.TextStyle(
                   fontSize: 10,
-                  fontWeight:
-                      negrita ? pw.FontWeight.bold : pw.FontWeight.normal)),
+                  fontWeight: negrita
+                      ? pw.FontWeight.bold
+                      : pw.FontWeight.normal)),
         ),
       ]),
     );
@@ -235,11 +246,9 @@ class ProformaPdf {
   // ── Tabla de equipos ────────────────────────────────────────────────────────
 
   static pw.Widget _tablaEquipos(
-    List<ProformaEquipo> equipos,
+    List<BoletaEquipo> equipos,
     Map<String, pw.MemoryImage> fotos,
     NumberFormat fmt,
-    DateFormat dateFmt,
-    String s,
   ) {
     return pw.Column(
       children: [
@@ -254,7 +263,7 @@ class ProformaPdf {
             ),
           ),
           child: pw.Center(
-            child: pw.Text('PROFORMA DE ALQUILER DE EQUIPO',
+            child: pw.Text('BOLETA DE ALQUILER DE EQUIPO',
                 style: pw.TextStyle(
                     color: PdfColors.white,
                     fontWeight: pw.FontWeight.bold,
@@ -266,12 +275,10 @@ class ProformaPdf {
           columnWidths: {
             0: const pw.FixedColumnWidth(46),
             1: const pw.FlexColumnWidth(4),
-            2: const pw.FixedColumnWidth(30),
-            3: const pw.FixedColumnWidth(30),
-            4: const pw.FixedColumnWidth(48),
-            5: const pw.FixedColumnWidth(48),
-            6: const pw.FixedColumnWidth(56),
-            7: const pw.FixedColumnWidth(56),
+            2: const pw.FixedColumnWidth(36),
+            3: const pw.FixedColumnWidth(36),
+            4: const pw.FixedColumnWidth(70),
+            5: const pw.FixedColumnWidth(70),
           },
           children: [
             pw.TableRow(
@@ -281,8 +288,6 @@ class ProformaPdf {
                 _th('DESCRIPCION DEL ARTICULO'),
                 _th('Cant'),
                 _th('Dias'),
-                _th('Desde'),
-                _th('Hasta'),
                 _th('Precio', align: pw.TextAlign.right),
                 _th('Total', align: pw.TextAlign.right),
               ],
@@ -294,18 +299,15 @@ class ProformaPdf {
                   pw.Padding(
                     padding: const pw.EdgeInsets.all(3),
                     child: foto != null
-                        ? pw.Image(foto, width: 40, height: 40, fit: pw.BoxFit.cover)
+                        ? pw.Image(foto,
+                            width: 40, height: 40, fit: pw.BoxFit.cover)
                         : pw.SizedBox(width: 40, height: 40),
                   ),
                   _td(e.nombreEquipo ?? 'Equipo #${e.numeroActivo}'),
                   _td('${e.cantidad}', align: pw.TextAlign.center),
                   _td('${e.dias}', align: pw.TextAlign.center),
-                  _td(e.fechaDesde != null ? dateFmt.format(e.fechaDesde!) : '',
-                      align: pw.TextAlign.center),
-                  _td(e.fechaHasta != null ? dateFmt.format(e.fechaHasta!) : '',
-                      align: pw.TextAlign.center),
-                  _td('$s ${fmt.format(e.costo)}', align: pw.TextAlign.right),
-                  _td('$s ${fmt.format(e.total)}', align: pw.TextAlign.right),
+                  _td(fmt.format(e.precioFinal), align: pw.TextAlign.right),
+                  _td(fmt.format(e.total), align: pw.TextAlign.right),
                 ],
               );
             }),
@@ -320,7 +322,8 @@ class ProformaPdf {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       child: pw.Text(text,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          style:
+              pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
           textAlign: align),
     );
   }
@@ -337,9 +340,8 @@ class ProformaPdf {
   // ── Sección inferior ────────────────────────────────────────────────────────
 
   static pw.Widget _seccionInferior({
-    required Proforma proforma,
+    required Boleta boleta,
     required NumberFormat fmt,
-    required String s,
     required double subtotal,
     required double iva,
     required double total,
@@ -347,20 +349,19 @@ class ProformaPdf {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Columna izquierda: info relacionada + clausulas
         pw.Expanded(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              if (proforma.observaciones != null &&
-                  proforma.observaciones!.isNotEmpty) ...[
-                pw.Text('Informacion Relacionada:',
+              if (boleta.observaciones != null &&
+                  boleta.observaciones!.isNotEmpty) ...[
+                pw.Text('Observaciones:',
                     style: pw.TextStyle(
                         fontWeight: pw.FontWeight.bold,
                         fontSize: 9,
                         decoration: pw.TextDecoration.underline)),
                 pw.SizedBox(height: 4),
-                pw.Text(proforma.observaciones!,
+                pw.Text(boleta.observaciones!,
                     style: const pw.TextStyle(fontSize: 9)),
                 pw.SizedBox(height: 10),
               ],
@@ -382,7 +383,6 @@ class ProformaPdf {
           ),
         ),
         pw.SizedBox(width: 24),
-        // Columna derecha: totales
         pw.SizedBox(
           width: 180,
           child: pw.Table(
@@ -392,14 +392,12 @@ class ProformaPdf {
               1: const pw.FlexColumnWidth(2),
             },
             children: [
-              _filaTotal('Sub total:', '$s ${fmt.format(subtotal)}'),
-              _filaTotal('Transporte:',
-                  '$s ${fmt.format(proforma.transporte)}'),
+              _filaTotal('Sub total:', fmt.format(subtotal)),
+              _filaTotal('Transporte:', fmt.format(boleta.transporte)),
+              _filaTotal('Impuesto de ventas:', fmt.format(iva)),
               _filaTotal(
-                  'Impuesto de ventas:', '$s ${fmt.format(iva)}'),
-              _filaTotal('Descuento: Tarifa especial',
-                  '$s ${fmt.format(proforma.descuento)}'),
-              _filaTotalNegrita('Total:', '$s ${fmt.format(total)}'),
+                  'Descuento:', fmt.format(boleta.descuento)),
+              _filaTotalNegrita('Total:', fmt.format(total)),
             ],
           ),
         ),
@@ -410,11 +408,13 @@ class ProformaPdf {
   static pw.TableRow _filaTotal(String label, String valor) {
     return pw.TableRow(children: [
       pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding:
+            const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: pw.Text(label, style: const pw.TextStyle(fontSize: 9)),
       ),
       pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding:
+            const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: pw.Text(valor,
             style: const pw.TextStyle(fontSize: 9),
             textAlign: pw.TextAlign.right),
@@ -427,16 +427,18 @@ class ProformaPdf {
       decoration: const pw.BoxDecoration(color: _grisClaro),
       children: [
         pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          padding:
+              const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           child: pw.Text(label,
-              style:
-                  pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  fontSize: 10, fontWeight: pw.FontWeight.bold)),
         ),
         pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          padding:
+              const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           child: pw.Text(valor,
-              style:
-                  pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(
+                  fontSize: 10, fontWeight: pw.FontWeight.bold),
               textAlign: pw.TextAlign.right),
         ),
       ],

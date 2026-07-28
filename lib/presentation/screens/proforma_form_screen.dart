@@ -10,16 +10,22 @@ import '../../domain/models/inventario.dart';
 import '../../domain/models/proforma.dart';
 import '../../domain/models/proforma_equipo.dart';
 
+const _verde = Color(0xFF2E7D32);
+const _verdeOscuro = Color(0xFF1B5E20);
+const _fondoVerde = Color(0xFFF0F7F0);
+
 class ProformaFormScreen extends ConsumerStatefulWidget {
   const ProformaFormScreen({super.key, this.proformaExistente});
 
   final Proforma? proformaExistente;
 
   @override
-  ConsumerState<ProformaFormScreen> createState() => _ProformaFormScreenState();
+  ConsumerState<ProformaFormScreen> createState() =>
+      _ProformaFormScreenState();
 }
 
-class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
+class _ProformaFormScreenState
+    extends ConsumerState<ProformaFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late final _nombreController =
@@ -27,18 +33,26 @@ class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
   late final _contactoController =
       TextEditingController(text: widget.proformaExistente?.contacto);
   late final _correoController =
-      TextEditingController(text: widget.proformaExistente?.correoCliente);
+      TextEditingController(
+          text: widget.proformaExistente?.correoCliente);
   late final _telefonoController =
-      TextEditingController(text: widget.proformaExistente?.telefonoCliente);
+      TextEditingController(
+          text: widget.proformaExistente?.telefonoCliente);
   late final _infoDetalleController = TextEditingController(
       text: widget.proformaExistente?.informacionDetalle);
   late final _observacionesController =
-      TextEditingController(text: widget.proformaExistente?.observaciones);
+      TextEditingController(
+          text: widget.proformaExistente?.observaciones);
   late final _transporteController = TextEditingController(
-      text: widget.proformaExistente?.transporte.toStringAsFixed(2) ?? '0.00');
+      text:
+          widget.proformaExistente?.transporte.toStringAsFixed(2) ??
+              '0.00');
   late final _descuentoController = TextEditingController(
-      text: widget.proformaExistente?.descuento.toStringAsFixed(2) ?? '0.00');
-  late Moneda _moneda = widget.proformaExistente?.moneda ?? Moneda.colon;
+      text:
+          widget.proformaExistente?.descuento.toStringAsFixed(2) ??
+              '0.00');
+  late Moneda _moneda =
+      widget.proformaExistente?.moneda ?? Moneda.colon;
 
   Proforma? _proformaGuardada;
   bool _guardando = false;
@@ -78,9 +92,10 @@ class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
         informacionDetalle: _infoDetalleController.text.trim().isEmpty
             ? null
             : _infoDetalleController.text.trim(),
-        observaciones: _observacionesController.text.trim().isEmpty
-            ? null
-            : _observacionesController.text.trim(),
+        observaciones:
+            _observacionesController.text.trim().isEmpty
+                ? null
+                : _observacionesController.text.trim(),
         moneda: _moneda,
         transporte: double.tryParse(
                 _transporteController.text.trim().replaceAll(',', '.')) ??
@@ -95,8 +110,8 @@ class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
       ref.invalidate(proformaListProvider);
       setState(() => _proformaGuardada = resultado);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Proforma guardada')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Proforma guardada')));
       }
     } finally {
       if (mounted) setState(() => _guardando = false);
@@ -107,7 +122,8 @@ class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
     final equipos = await ref
         .read(proformaRepositoryProvider)
         .getEquipos(_proformaGuardada!.proformaId!);
-    await ProformaPdf.mostrar(proforma: _proformaGuardada!, equipos: equipos);
+    await ProformaPdf.mostrar(
+        proforma: _proformaGuardada!, equipos: equipos);
   }
 
   Future<void> _enviarCorreo() async {
@@ -133,139 +149,225 @@ class _ProformaFormScreenState extends ConsumerState<ProformaFormScreen> {
   @override
   Widget build(BuildContext context) {
     final esNueva = _proformaGuardada?.proformaId == null;
+    final guardada = _proformaGuardada?.proformaId != null;
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(esNueva ? 'Nueva proforma' : 'Editar proforma')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Datos del cliente',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nombreController,
-                decoration:
-                    const InputDecoration(labelText: 'Cliente / Empresa'),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _contactoController,
-                decoration:
-                    const InputDecoration(labelText: 'Contacto (opcional)'),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _telefonoController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Teléfono'),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _correoController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Correo'),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _infoDetalleController,
-                decoration: const InputDecoration(
-                    labelText: 'Info / detalle (ej: Proyecto X)'),
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              Text('Proforma',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<Moneda>(
-                initialValue: _moneda,
-                decoration: const InputDecoration(labelText: 'Moneda'),
-                items: Moneda.values
-                    .map((m) => DropdownMenuItem(
-                        value: m, child: Text(m.etiqueta)))
-                    .toList(),
-                onChanged: (v) => setState(() => _moneda = v!),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _transporteController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      decoration:
-                          const InputDecoration(labelText: 'Transporte'),
-                    ),
+        title: Text(esNueva ? 'Nueva proforma' : 'Editar proforma'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
+            // ── Cliente ──────────────────────────────────────────────
+            _Seccion(
+              titulo: 'Datos del cliente',
+              children: [
+                TextFormField(
+                  controller: _nombreController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Cliente / Empresa',
+                    prefixIcon: Icon(Icons.business_outlined, size: 20),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _descuentoController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      decoration:
-                          const InputDecoration(labelText: 'Descuento'),
-                    ),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _contactoController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Contacto (opcional)',
+                    prefixIcon: Icon(Icons.person_outline, size: 20),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _observacionesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                    labelText: 'Informacion relacionada (opcional)'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  FilledButton(
-                    onPressed: _guardando ? null : _guardar,
-                    child: _guardando
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Guardar'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _telefonoController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Teléfono',
+                    prefixIcon: Icon(Icons.phone_outlined, size: 20),
                   ),
-                  if (_proformaGuardada?.proformaId != null) ...[
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.picture_as_pdf),
-                      label: const Text('PDF'),
-                      onPressed: _generarPdf,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _correoController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    prefixIcon: Icon(Icons.mail_outline, size: 20),
+                  ),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _infoDetalleController,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Detalle / proyecto (opcional)',
+                    prefixIcon: Icon(Icons.work_outline, size: 20),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Condiciones ──────────────────────────────────────────
+            _Seccion(
+              titulo: 'Condiciones',
+              children: [
+                DropdownButtonFormField<Moneda>(
+                  initialValue: _moneda,
+                  decoration: const InputDecoration(
+                    labelText: 'Moneda',
+                    prefixIcon:
+                        Icon(Icons.monetization_on_outlined, size: 20),
+                  ),
+                  items: Moneda.values
+                      .map((m) => DropdownMenuItem(
+                          value: m, child: Text(m.etiqueta)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _moneda = v!),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _transporteController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(
+                                decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Transporte',
+                          prefixIcon:
+                              Icon(Icons.local_shipping_outlined, size: 20),
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.email_outlined),
-                      label: const Text('Enviar'),
-                      onPressed: _enviarCorreo,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _descuentoController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(
+                                decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Descuento',
+                          prefixIcon: Icon(Icons.discount_outlined, size: 20),
+                        ),
+                      ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _observacionesController,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Observaciones (opcional)',
+                    alignLabelWithHint: true,
+                    prefixIcon: Icon(Icons.notes_outlined, size: 20),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Botones ──────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _guardando ? null : _guardar,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: _verdeOscuro,
+                ),
+                child: _guardando
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5, color: Colors.white),
+                      )
+                    : const Text('Guardar proforma',
+                        style: TextStyle(fontSize: 15)),
+              ),
+            ),
+            if (guardada) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf_outlined,
+                          size: 18),
+                      label: const Text('PDF'),
+                      onPressed: _generarPdf,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _verde,
+                        side: const BorderSide(color: _verde),
+                        minimumSize: const Size(0, 46),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.send_outlined, size: 18),
+                      label: const Text('Enviar'),
+                      onPressed: _enviarCorreo,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _verde,
+                        side: const BorderSide(color: _verde),
+                        minimumSize: const Size(0, 46),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-              const Divider(),
-              if (esNueva)
-                const Text(
-                    'Guarda la proforma primero para poder agregar equipos.')
-              else
-                _SeccionEquipos(proforma: _proformaGuardada!),
             ],
-          ),
+            const SizedBox(height: 20),
+
+            // ── Equipos ──────────────────────────────────────────────
+            if (esNueva)
+              _AvisionGuardar()
+            else
+              _SeccionEquipos(proforma: _proformaGuardada!),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Aviso "guarda primero" ────────────────────────────────────────────────────
+
+class _AvisionGuardar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, color: Color(0xFF9E9E9E), size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Guarda la proforma primero para poder agregar equipos.',
+              style: TextStyle(color: Color(0xFF757575), fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -285,96 +387,108 @@ class _SeccionEquipos extends ConsumerWidget {
     final fmt = NumberFormat('#,##0.00');
     final s = proforma.moneda.simbolo;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Equipos',
-                style: Theme.of(context).textTheme.titleMedium),
-            TextButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar'),
-              onPressed: () => _mostrarDialogo(context, ref),
-            ),
-          ],
-        ),
-        equiposAsync.when(
-          data: (items) {
-            if (items.isEmpty) {
-              return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Sin equipos agregados'));
-            }
-            final subtotal = items.fold(0.0, (sum, e) => sum + e.total);
-            final base = subtotal + proforma.transporte;
-            final iva = base * 0.13;
-            final total = base + iva - proforma.descuento;
-
-            return Column(
-              children: [
-                ...items.map((item) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(item.nombreEquipo ??
-                          'Equipo #${item.numeroActivo}'),
-                      subtitle: Text(
-                          'Cant: ${item.cantidad}  |  Dias: ${item.dias}'
-                          '${item.observacion != null ? '  |  ${item.observacion}' : ''}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('$s ${fmt.format(item.total)}'),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline,
-                                color: Colors.red),
-                            onPressed: () =>
-                                _eliminar(context, ref, item),
-                          ),
-                        ],
-                      ),
-                    )),
-                const Divider(),
-                _filaResumen('Subtotal', '$s ${fmt.format(subtotal)}'),
-                _filaResumen('Transporte',
-                    '$s ${fmt.format(proforma.transporte)}'),
-                _filaResumen(
-                    'IVA (13%)', '$s ${fmt.format(iva)}'),
-                _filaResumen('Descuento',
-                    '$s ${fmt.format(proforma.descuento)}'),
-                const Divider(),
-                _filaResumen('Total', '$s ${fmt.format(total)}',
-                    negrita: true),
-              ],
-            );
-          },
-          loading: () => const CircularProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
-        ),
-      ],
-    );
-  }
-
-  Widget _filaResumen(String label, String valor,
-      {bool negrita = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontWeight:
-                      negrita ? FontWeight.bold : FontWeight.normal)),
-          const SizedBox(width: 24),
-          SizedBox(
-              width: 120,
-              child: Text(valor,
-                  textAlign: TextAlign.right,
+          // Encabezado de la sección
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 16,
+                  decoration: BoxDecoration(
+                      color: _verde,
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Equipos',
                   style: TextStyle(
-                      fontWeight: negrita
-                          ? FontWeight.bold
-                          : FontWeight.normal))),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Color(0xFF1A1A1A)),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Agregar'),
+                  style: TextButton.styleFrom(foregroundColor: _verde),
+                  onPressed: () => _mostrarDialogo(context, ref),
+                ),
+              ],
+            ),
+          ),
+
+          equiposAsync.when(
+            data: (items) {
+              if (items.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Sin equipos agregados.',
+                      style: TextStyle(color: Color(0xFF9E9E9E))),
+                );
+              }
+              final subtotal =
+                  items.fold(0.0, (sum, e) => sum + e.total);
+              final base = subtotal + proforma.transporte;
+              final iva = base * 0.13;
+              final total = base + iva - proforma.descuento;
+
+              return Column(
+                children: [
+                  ...items.map((item) => _ItemEquipo(
+                        nombre: item.nombreEquipo ??
+                            'Equipo #${item.numeroActivo}',
+                        detalle:
+                            'Cant: ${item.cantidad}  ·  ${item.dias} días'
+                            '${item.observacion != null ? '  ·  ${item.observacion}' : ''}',
+                        total: '$s ${fmt.format(item.total)}',
+                        onEliminar: () =>
+                            _eliminar(context, ref, item),
+                      )),
+                  // Resumen de totales
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _fondoVerde,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _FilaTotal('Subtotal', '$s ${fmt.format(subtotal)}'),
+                        _FilaTotal('Transporte',
+                            '$s ${fmt.format(proforma.transporte)}'),
+                        _FilaTotal('IVA (13%)', '$s ${fmt.format(iva)}'),
+                        _FilaTotal('Descuento',
+                            '- $s ${fmt.format(proforma.descuento)}'),
+                        const Divider(height: 16),
+                        _FilaTotal('Total', '$s ${fmt.format(total)}',
+                            negrita: true, grande: true),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error: $e',
+                  style: const TextStyle(color: Colors.red)),
+            ),
+          ),
         ],
       ),
     );
@@ -431,8 +545,7 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
   final _diasController = TextEditingController(text: '1');
   final _costoController = TextEditingController();
   final _observacionController = TextEditingController();
-  DateTime? _fechaDesde;
-  DateTime? _fechaHasta;
+  DateTime? _fechaEntrega;
   final _dateFmt = DateFormat('d/M/yyyy');
 
   @override
@@ -444,7 +557,7 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
     super.dispose();
   }
 
-  Future<void> _seleccionarFecha(bool esDesde) async {
+  Future<void> _seleccionarFechaEntrega() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -452,13 +565,7 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
       lastDate: DateTime(2030),
     );
     if (picked == null) return;
-    setState(() {
-      if (esDesde) {
-        _fechaDesde = picked;
-      } else {
-        _fechaHasta = picked;
-      }
-    });
+    setState(() => _fechaEntrega = picked);
   }
 
   @override
@@ -466,7 +573,12 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
     final inventarioAsync = ref.watch(inventarioListProvider);
 
     return AlertDialog(
-      title: const Text('Agregar equipo'),
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Agregar equipo',
+          style: TextStyle(fontWeight: FontWeight.w700)),
+      contentPadding:
+          const EdgeInsets.fromLTRB(20, 12, 20, 0),
       content: SizedBox(
         width: 400,
         child: Form(
@@ -476,32 +588,39 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 inventarioAsync.when(
-                  data: (equipos) => DropdownButtonFormField<Inventario>(
+                  data: (equipos) =>
+                      DropdownButtonFormField<Inventario>(
                     initialValue: _equipoSeleccionado,
                     hint: const Text('Selecciona un equipo'),
+                    decoration: const InputDecoration(
+                        labelText: 'Equipo'),
                     items: equipos
                         .map((e) => DropdownMenuItem(
-                            value: e, child: Text(e.nombreEquipo)))
+                            value: e,
+                            child: Text(e.nombreEquipo)))
                         .toList(),
                     onChanged: (v) =>
                         setState(() => _equipoSeleccionado = v),
                     validator: (v) =>
                         v == null ? 'Selecciona un equipo' : null,
                   ),
-                  loading: () => const CircularProgressIndicator(),
+                  loading: () =>
+                      const LinearProgressIndicator(),
                   error: (e, _) => Text('Error: $e'),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _cantidadController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Cantidad'),
+                        decoration: const InputDecoration(
+                            labelText: 'Cantidad'),
                         validator: (v) =>
-                            (int.tryParse(v ?? '') == null) ? 'Invalido' : null,
+                            (int.tryParse(v ?? '') == null)
+                                ? 'Inválido'
+                                : null,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -510,65 +629,48 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
                         controller: _diasController,
                         keyboardType: TextInputType.number,
                         decoration:
-                            const InputDecoration(labelText: 'Dias'),
+                            const InputDecoration(labelText: 'Días'),
                         validator: (v) =>
-                            (int.tryParse(v ?? '') == null) ? 'Invalido' : null,
+                            (int.tryParse(v ?? '') == null)
+                                ? 'Inválido'
+                                : null,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _seleccionarFecha(true),
-                        child: InputDecorator(
-                          decoration:
-                              const InputDecoration(labelText: 'Desde'),
-                          child: Text(_fechaDesde != null
-                              ? _dateFmt.format(_fechaDesde!)
-                              : '—'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _seleccionarFecha(false),
-                        child: InputDecorator(
-                          decoration:
-                              const InputDecoration(labelText: 'Hasta'),
-                          child: Text(_fechaHasta != null
-                              ? _dateFmt.format(_fechaHasta!)
-                              : '—'),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: _seleccionarFechaEntrega,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                        labelText: 'Fecha de entrega (opcional)'),
+                    child: Text(_fechaEntrega != null
+                        ? _dateFmt.format(_fechaEntrega!)
+                        : '—'),
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _costoController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
                   decoration: InputDecoration(
                       labelText:
                           'Precio unitario (${widget.proforma.moneda.simbolo})'),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Requerido';
-                    if (double.tryParse(v.replaceAll(',', '.')) == null) {
-                      return 'Valor invalido';
-                    }
+                    if (double.tryParse(v.replaceAll(',', '.')) ==
+                        null) return 'Valor inválido';
                     return null;
                   },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _observacionController,
                   decoration: const InputDecoration(
-                      labelText: 'Observacion (opcional)'),
+                      labelText: 'Observación (opcional)'),
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -579,27 +681,157 @@ class _DialogoEquipoState extends ConsumerState<_DialogoEquipo> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancelar')),
         FilledButton(
-            onPressed: _confirmar, child: const Text('Agregar')),
+          style: FilledButton.styleFrom(backgroundColor: _verde),
+          onPressed: _confirmar,
+          child: const Text('Agregar'),
+        ),
       ],
     );
   }
 
   void _confirmar() {
     if (!_formKey.currentState!.validate()) return;
+    final dias = int.parse(_diasController.text.trim());
+    final fechaHasta = _fechaEntrega?.add(Duration(days: dias));
     Navigator.of(context).pop(
       ProformaEquipo(
         proformaId: widget.proforma.proformaId,
         numeroActivo: _equipoSeleccionado!.numeroActivo,
         cantidad: int.parse(_cantidadController.text.trim()),
-        dias: int.parse(_diasController.text.trim()),
-        fechaDesde: _fechaDesde,
-        fechaHasta: _fechaHasta,
+        dias: dias,
+        fechaDesde: _fechaEntrega,
+        fechaHasta: fechaHasta,
         costo: double.parse(
             _costoController.text.trim().replaceAll(',', '.')),
         observacion: _observacionController.text.trim().isEmpty
             ? null
             : _observacionController.text.trim(),
         nombreEquipo: _equipoSeleccionado!.nombreEquipo,
+      ),
+    );
+  }
+}
+
+// ── Widgets reutilizables ─────────────────────────────────────────────────────
+
+class _Seccion extends StatelessWidget {
+  const _Seccion({required this.titulo, required this.children});
+
+  final String titulo;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 3,
+              height: 16,
+              decoration: BoxDecoration(
+                  color: _verde,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(width: 8),
+            Text(titulo,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF1A1A1A))),
+          ]),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _ItemEquipo extends StatelessWidget {
+  const _ItemEquipo({
+    required this.nombre,
+    required this.detalle,
+    required this.total,
+    required this.onEliminar,
+  });
+
+  final String nombre;
+  final String detalle;
+  final String total;
+  final VoidCallback onEliminar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 0),
+      child: Row(
+        children: [
+          const Icon(Icons.construction_outlined,
+              size: 18, color: Color(0xFF9E9E9E)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nombre,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13)),
+                Text(detalle,
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF9E9E9E))),
+              ],
+            ),
+          ),
+          Text(total,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w600, fontSize: 13)),
+          IconButton(
+            icon: const Icon(Icons.delete_outline,
+                size: 18, color: Colors.red),
+            onPressed: onEliminar,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilaTotal extends StatelessWidget {
+  const _FilaTotal(this.label, this.valor,
+      {this.negrita = false, this.grande = false});
+
+  final String label;
+  final String valor;
+  final bool negrita;
+  final bool grande;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontWeight: negrita ? FontWeight.w700 : FontWeight.w400,
+      fontSize: grande ? 15 : 13,
+      color: grande
+          ? const Color(0xFF1B5E20)
+          : const Color(0xFF424242),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: style),
+          Text(valor, style: style),
+        ],
       ),
     );
   }

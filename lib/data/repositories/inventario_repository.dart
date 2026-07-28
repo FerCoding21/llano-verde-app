@@ -43,6 +43,18 @@ class InventarioRepository {
     return Inventario.fromMap(data);
   }
 
+  Future<void> updateEstado(int numeroActivo, EstadoInventario estado) async {
+    await _table
+        .update({'estado': estado.name})
+        .eq('numero_activo', numeroActivo);
+  }
+
+  Future<void> setFotoPortada(int numeroActivo, String? url) async {
+    await _table
+        .update({'foto_portada': url})
+        .eq('numero_activo', numeroActivo);
+  }
+
   Future<void> delete(int numeroActivo) async {
     await _table.delete().eq('numero_activo', numeroActivo);
   }

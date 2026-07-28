@@ -7,6 +7,7 @@ class BoletaEquipo {
   final int cantidad;
   final int dias;
   final String? nombreEquipo;
+  final String? fotoPortada;
 
   const BoletaEquipo({
     this.boletaEquipoId,
@@ -17,6 +18,7 @@ class BoletaEquipo {
     this.cantidad = 1,
     this.dias = 1,
     this.nombreEquipo,
+    this.fotoPortada,
   });
 
   double get total => precioFinal * cantidad;
@@ -32,6 +34,7 @@ class BoletaEquipo {
       cantidad: (map['cantidad'] as int?) ?? 1,
       dias: (map['dias'] as int?) ?? 1,
       nombreEquipo: inventario?['nombre_equipo'] as String?,
+      fotoPortada: inventario?['foto_portada'] as String?,
     );
   }
 

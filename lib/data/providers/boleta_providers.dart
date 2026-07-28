@@ -21,6 +21,11 @@ final boletaListProvider = FutureProvider<List<Boleta>>((ref) {
   return ref.watch(boletaRepositoryProvider).getAll();
 });
 
+// Solo boletas activas, ordenadas por fecha_retiro ASC (más urgentes primero)
+final boletasActivasProvider = FutureProvider<List<Boleta>>((ref) {
+  return ref.watch(boletaRepositoryProvider).getActivas();
+});
+
 final boletaEquiposProvider =
     FutureProvider.family<List<BoletaEquipo>, int>((ref, boletaId) {
   return ref.watch(boletaRepositoryProvider).getEquipos(boletaId);

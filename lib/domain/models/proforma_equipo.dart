@@ -11,6 +11,7 @@ class ProformaEquipo {
   final double costo;
   final String? observacion;
   final String? nombreEquipo;
+  final String? fotoPortada;
 
   const ProformaEquipo({
     this.proformaEquipoId,
@@ -23,6 +24,7 @@ class ProformaEquipo {
     required this.costo,
     this.observacion,
     this.nombreEquipo,
+    this.fotoPortada,
   });
 
   double get total => costo * cantidad;
@@ -44,6 +46,7 @@ class ProformaEquipo {
       costo: (map['costo'] as num).toDouble(),
       observacion: map['observacion'] as String?,
       nombreEquipo: inventario?['nombre_equipo'] as String?,
+      fotoPortada: inventario?['foto_portada'] as String?,
     );
   }
 

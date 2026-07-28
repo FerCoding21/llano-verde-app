@@ -47,7 +47,7 @@ class ProformaRepository {
     // El join 'inventario(nombre_equipo)' trae el nombre del equipo
     // usando el FK numero_activo → inventario sin hacer un query extra por ítem
     final data = await _equipos
-        .select('*, inventario(nombre_equipo)')
+        .select('*, inventario(nombre_equipo, foto_portada)')
         .eq('proforma_id', proformaId);
     return data.map(ProformaEquipo.fromMap).toList();
   }
