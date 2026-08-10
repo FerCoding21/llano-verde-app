@@ -80,7 +80,8 @@ class _InventarioFormScreenState
       await ref
           .read(inventarioRepositoryProvider)
           .setFotoPortada(equipo!.numeroActivo!, url);
-      setState(() => _equipoGuardado = equipo.copyWith(fotoPortada: url));
+      // Invalidar el provider que la galería observa para que recargue desde BD
+      ref.invalidate(inventarioItemProvider(equipo.numeroActivo!));
       ref.invalidate(inventarioListProvider);
     } catch (e) {
       if (mounted) {
@@ -242,7 +243,6 @@ class _InventarioFormScreenState
                 else
                   _GaleriaFotos(
                     numeroActivo: _equipoGuardado!.numeroActivo!,
-                    fotoPortada: _equipoGuardado!.fotoPortada,
                     subiendo: _subiendoFoto,
                     onAgregar: _agregarFoto,
                     onSetPrincipal: _setFotoPrincipal,
@@ -275,20 +275,21 @@ class _GaleriaFotos extends ConsumerWidget {
     required this.subiendo,
     required this.onAgregar,
     required this.onSetPrincipal,
-    this.fotoPortada,
   });
 
   final int numeroActivo;
   final bool subiendo;
   final VoidCallback onAgregar;
   final void Function(String url) onSetPrincipal;
-  final String? fotoPortada;
 
   static const _dorado = Color(0xFFFFBF00);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final imagenesAsync = ref.watch(imagenesEquipoProvider(numeroActivo));
+    // Lee fotoPortada siempre fresca desde BD para evitar desfase con el estado del parent
+    final fotoPortada =
+        ref.watch(inventarioItemProvider(numeroActivo)).valueOrNull?.fotoPortada;
 
     return imagenesAsync.when(
       data: (imagenes) => Column(

@@ -23,3 +23,9 @@ final inventarioDisponibleProvider = FutureProvider<List<Inventario>>((ref) {
   return ref.watch(inventarioRepositoryProvider)
       .getAll(estado: EstadoInventario.disponible);
 });
+
+// Un equipo por ID — usado por la galería para obtener fotoPortada fresca
+final inventarioItemProvider =
+    FutureProvider.family<Inventario?, int>((ref, numeroActivo) async {
+  return ref.read(inventarioRepositoryProvider).getById(numeroActivo);
+});
