@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.llanoverde" "\0"
-            VALUE "FileDescription", "llano_verde" "\0"
+            VALUE "FileDescription", "Llano Verde" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "llano_verde" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.llanoverde. All rights reserved." "\0"
+            VALUE "InternalName", "Llano Verde" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 S Y E Soluciones SRL. All rights reserved." "\0"
             VALUE "OriginalFilename", "llano_verde.exe" "\0"
-            VALUE "ProductName", "llano_verde" "\0"
+            VALUE "ProductName", "Llano Verde" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
